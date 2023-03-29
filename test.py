@@ -2,11 +2,23 @@ import Car_toolkit as ct
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle
-import matplotlib.animation as animation
-fig, ax = plt.subplots()
+import shutil
+
+import fuzzySystem as fSys
+import os
+ 
+try:
+	os.mkdir("./index/")
+except:
+	print("folder exist")
+for f in os.listdir("./index/"):
+    os.remove(os.path.join("./index/", f))
+
+
+fig, ax = plt.subplots(figsize=(5, 5))
 square, car_pos, endline = ct.getSquare("軌道座標點.txt")
 frame=0
-while (not(ct.inBox(car_pos[0], car_pos[1])))and frame<50:
+while (not(ct.inBox(car_pos[0], car_pos[1])))and frame<100:
 	
 	plt.xlim([-20, 50])
 	plt.ylim([-10, 60])
@@ -20,13 +32,7 @@ while (not(ct.inBox(car_pos[0], car_pos[1])))and frame<50:
 	rd, fd, ld = min_ds
 	rp, fp, lp = min_ds_point
 	
-	theta=0
-	if rd<10:
-		theta=0
-	elif fd<10:
-		theta=40
-	elif ld<10:
-		theta=0
+	theta = fSys.fuzzy_system(rd, fd, ld)
 
 	ax.plot([car_pos[0], fs[0]], [car_pos[1], fs[1]], 'r-', linewidth=2)
 	ax.plot([car_pos[0], ls[0]], [car_pos[1], ls[1]], 'g-', linewidth=2)
@@ -43,25 +49,37 @@ while (not(ct.inBox(car_pos[0], car_pos[1])))and frame<50:
 	
 	file_name="./index/"+str(frame)+".png"
 	fig.savefig(file_name)
-	print(file_name, "saved")
+	text = "step "+str(frame)+" completed!"
+	print(text)
 	ax.cla()
 	frame += 1
 
-from PIL import Image
-import os
+import cv2
 
-print("saving gif")
-folder_path = "./index"
-image_list = []
-for filename in os.listdir(folder_path):
-    if filename.endswith(".png"):
-        number = int(filename.split(".")[0])
-        image_path = os.path.join(folder_path, filename)
-        image = Image.open(image_path)
-        image_list.append((number, image))
+# 設定影片參數
+fps = 10  # 影片每秒的幀數
+size = (500, 500)  # 影片的解析度
 
-image_list.sort(key=lambda x: x[0])
-sorted_images = [img for _, img in image_list]
+# 設定要讀取的圖片資料夾路徑
+folder_path = './index'
 
-save_path = "./animation.gif"
-sorted_images[0].save(save_path, save_all=True, append_images=sorted_images[1:], duration=100, loop=0)
+# 讀取資料夾中所有的圖片路徑
+img_paths = [os.path.join(folder_path, img) for img in os.listdir(folder_path)]
+
+# 根據檔名的數字排序圖片路徑
+img_paths = sorted(img_paths, key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
+
+# 建立影片寫入器
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+video_writer = cv2.VideoWriter('output.mp4', fourcc, fps, size)
+
+# 依序讀取圖片並寫入影片
+for img_path in img_paths:
+    img = cv2.imread(img_path)
+    cv2.imshow("live", img)
+    video_writer.write(img)
+    cv2.waitKey(100)
+
+# 釋放影片寫入器資源
+video_writer.release()
+cv2.destroyAllWindows()
