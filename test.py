@@ -26,8 +26,11 @@ while (not(ct.inBox(car_pos[0], car_pos[1])))and frame<100:
 	plt.plot(sX, sY)
 	rect = Rectangle((18, 37), 12, 3, linewidth=1, edgecolor='r', facecolor='none')
 	circle = Circle((car_pos[0], car_pos[1]), 3, fill=False)
-
-	sensors, min_ds, min_ds_point = ct.draw_sensors(car_pos[0], car_pos[1], car_pos[2], square)
+	try:
+		sensors, min_ds, min_ds_point = ct.draw_sensors(car_pos[0], car_pos[1], car_pos[2], square)
+	except:
+		print("failed")
+		break
 	rs, fs, ls = sensors
 	rd, fd, ld = min_ds
 	rp, fp, lp = min_ds_point
